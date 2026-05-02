@@ -11,8 +11,8 @@ def procesar_csv_brou(file_path):
     df.columns = ['fecha', 'descripcion', 'monto']
     
     # Crear hash para evitar duplicados al importar varias veces
-    df['hash'] = pd.util.hash_pandas_object(df, index=False).astype(str)
-    return df
+    # df['hash'] = pd.util.hash_pandas_object(df, index=False).astype(str)
+    # return df
 
 def procesar_excel_brou(file_path):
     print(f"--- DEBUG: Iniciando lectura de {file_path} ---")
