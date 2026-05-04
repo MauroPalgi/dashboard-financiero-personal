@@ -125,10 +125,17 @@ dmypy.json
 
 
 # Project related
-data/raw/*.csv
-data/raw/*.xls
-data/raw/*.xls#
+back/data/raw/*.xls
+back/data/raw/*.xls#
+back/data/raw/*.csv
 
 *.db
 .env
 __pycache__/
+
+
+.env
+__pycache__/
+backend/data/*.db
+node_modules/
+dist/
