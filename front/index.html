@@ -1,12 +1,144 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Financiero - Carga de Movimientos</title>
+    <style>
+        :root {
+            --bg: #1e1e1e;
+            --card: #2d2d2d;
+            --text: #e0e0e0;
+            --accent: #4caf50;
+            --danger: #f44336;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--card);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        button {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover { opacity: 0.9; }
+
+        /* Estilos del Modal */
+        #modal-validacion {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none; /* Se activa desde renderer.js */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--card);
+            padding: 25px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        /* Tabla de movimientos manuales */
+        .gasto-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr 1.5fr;
+            gap: 15px;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #444;
+        }
+
+        .gasto-row:last-child { border-bottom: none; }
+
+        .monto { font-weight: bold; text-align: right; }
+        .negativo { color: #ff8a80; }
+        .positivo { color: #b9f6ca; }
+
+        select {
+            background: #3d3d3d;
+            color: white;
+            border: 1px solid #555;
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        .modal-footer {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            position: sticky;
+            bottom: 0;
+            background: var(--card);
+            padding-top: 10px;
+        }
+
+        .btn-secundario { background-color: #666; }
+    </style>
+</head>
 <body>
-    <div id="drop-zone" style="border: 2px dashed #444; height: 200px;">
-        Arrastra tu Excel del BROU aquí
+
+    <div class="container">
+        <header>
+            <h1>Mis Finanzas</h1>
+            <button id="btn-cargar">📂 Importar Excel BROU</button>
+        </header>
+
+        <section id="dashboard-preview">
+            <p>Selecciona un archivo para comenzar el procesamiento manual de gastos.</p>
+        </section>
     </div>
-    <div id="stats">
-        <!-- Aquí se cargarán los gráficos -->
+
+    <!-- Modal de Validación Manual -->
+    <div id="modal-validacion">
+        <div class="modal-content">
+            <h2>Categorización Manual</h2>
+            <p>Asigna una categoría a cada movimiento detectado en el archivo:</p>
+            
+            <div id="categorias-pendientes">
+                <!-- Las filas se generarán aquí con renderer.js -->
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-secundario" onclick="document.getElementById('modal-validacion').style.display='none'">Cancelar</button>
+                <button id="btn-confirmar">✅ Confirmar y Guardar en DB</button>
+            </div>
+        </div>
     </div>
+
     <script src="renderer.js"></script>
 </body>
 </html>

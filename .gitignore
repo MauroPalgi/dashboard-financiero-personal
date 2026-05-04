@@ -139,3 +139,5 @@ __pycache__/
 backend/data/*.db
 node_modules/
 dist/
+
+*.xls

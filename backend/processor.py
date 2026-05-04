@@ -74,6 +74,7 @@ def procesar_excel_brou(file_path):
     df_final['hash'] = pd.util.hash_pandas_object(df_final, index=False).astype(str)
     
     return df_final
+
 def aplicar_reglas(df):
     conn = get_connection()
     reglas = pd.read_sql("SELECT * FROM reglas", conn)
