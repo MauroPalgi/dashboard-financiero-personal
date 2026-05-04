@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <title>Dashboard Financiero - Carga de Movimientos</title>
     <style>
         :root {
@@ -45,7 +47,9 @@
             font-weight: bold;
         }
 
-        button:hover { opacity: 0.9; }
+        button:hover {
+            opacity: 0.9;
+        }
 
         /* Estilos del Modal */
         #modal-validacion {
@@ -54,8 +58,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.8);
-            display: none; /* Se activa desde renderer.js */
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            /* Se activa desde renderer.js */
             justify-content: center;
             align-items: center;
             z-index: 1000;
@@ -81,11 +86,22 @@
             border-bottom: 1px solid #444;
         }
 
-        .gasto-row:last-child { border-bottom: none; }
+        .gasto-row:last-child {
+            border-bottom: none;
+        }
 
-        .monto { font-weight: bold; text-align: right; }
-        .negativo { color: #ff8a80; }
-        .positivo { color: #b9f6ca; }
+        .monto {
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .negativo {
+            color: #ff8a80;
+        }
+
+        .positivo {
+            color: #b9f6ca;
+        }
 
         select {
             background: #3d3d3d;
@@ -106,9 +122,12 @@
             padding-top: 10px;
         }
 
-        .btn-secundario { background-color: #666; }
+        .btn-secundario {
+            background-color: #666;
+        }
     </style>
 </head>
+
 <body>
 
     <div class="container">
@@ -127,18 +146,23 @@
         <div class="modal-content">
             <h2>Categorización Manual</h2>
             <p>Asigna una categoría a cada movimiento detectado en el archivo:</p>
-            
+
             <div id="categorias-pendientes">
                 <!-- Las filas se generarán aquí con renderer.js -->
             </div>
 
             <div class="modal-footer">
-                <button class="btn-secundario" onclick="document.getElementById('modal-validacion').style.display='none'">Cancelar</button>
+                <button class="btn-secundario"
+                    onclick="document.getElementById('modal-validacion').style.display='none'">Cancelar</button>
                 <button id="btn-confirmar">✅ Confirmar y Guardar en DB</button>
             </div>
         </div>
     </div>
-
+    <div class="container">
+        <div id="grafico-gastos"
+            style="width:100%; height:450px; margin-top:20px; background: #2d2d2d; border-radius: 8px;"></div>
+    </div>
     <script src="renderer.js"></script>
 </body>
+
 </html>

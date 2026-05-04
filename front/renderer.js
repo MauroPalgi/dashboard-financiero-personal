@@ -2,18 +2,6 @@ const btnCargar = document.getElementById('btn-cargar');
 const modal = document.getElementById('modal-validacion');
 const listaPendientes = document.getElementById('categorias-pendientes');
 const btnConfirmar = document.getElementById('btn-confirmar')
-// const btnFinalizar = document.getElementById('btn-finalizar')
-
-// btnFinalizar.addEventListener('click', () => {
-//     const filas = document.querySelectorAll('.select-categoria');
-//     const datosFinales = Array.from(filas).map(sel => {
-//         const base = JSON.parse(sel.dataset.json);
-//         return { ...base, categoria: sel.value };
-//     });
-
-//     window.electronAPI.saveToDatabase(datosFinales);
-// });
-
 
 // Al hacer clic en el botón "Confirmar y Guardar" del modal
 btnConfirmar.addEventListener('click', () => {
@@ -24,13 +12,16 @@ btnConfirmar.addEventListener('click', () => {
         datosParaGuardar.push({
             fecha: s.dataset.fecha,
             descripcion: s.dataset.desc,
-            importe: s.dataset.imp,
+            monto: s.dataset.monto,
             categoria: s.value
         });
     });
 
     // Enviamos la lista final a la base de datos
     window.electronAPI.saveToDatabase(datosParaGuardar);
+    // ACTUALIZAR GRÁFICO AL INSTANTE
+    actualizarGrafico(datosFinales);
+
     modal.style.display = 'none';
 });
 
@@ -46,18 +37,6 @@ btnCargar.addEventListener('click', async () => {
         console.error("Error:", error);
     }
 });
-
-// Definimos la función que causaba el ReferenceError
-async function validarCategorias(path) {
-    console.log("Validando categorías para:", path);
-
-    // Le pedimos a Python que analice el archivo
-    window.electronAPI.uploadFile(path);
-
-    // Mostramos el modal (puedes poner un spinner de carga aquí)
-    modal.style.display = 'block';
-    listaCategorias.innerHTML = "Consultando base de datos...";
-}
 
 // Escuchamos la respuesta de Python (configurado en preload.js)
 window.electronAPI.onPythonOutput(((data) => {
@@ -76,12 +55,12 @@ window.electronAPI.onPythonOutput(((data) => {
             row.className = "gasto-row";
 
             // Determinamos si es negativo o positivo para el color
-            const claseMonto = gasto.importe < 0 ? 'negativo' : 'positivo';
+            const claseMonto = gasto.monto < 0 ? 'negativo' : 'positivo';
 
             row.innerHTML = `
                 <span>${gasto.fecha}</span>
                 <strong>${gasto.descripcion}</strong>
-                <span class="monto ${claseMonto}">$${gasto.importe.toFixed(2)}</span>
+                <span class="monto ${claseMonto}">$${gasto.monto.toFixed(2)}</span>
                 <select class="input-categoria">
                     <option value="Comida">Comida</option>
                     <option value="Supermercado">Supermercado</option>
@@ -100,8 +79,68 @@ window.electronAPI.onPythonOutput(((data) => {
     }
 }));
 
+window.electronAPI.onUpdateGraphTotal((datos) => {
+    console.log("Datos recibidos para graficar:", datos);
+
+    if (!datos || datos.length === 0) {
+        console.warn("La base de datos está vacía, no hay nada que graficar.");
+        return;
+    }
+
+    const acumulado = {};
+    datos.forEach(mov => {
+        const monto = parseFloat(mov.monto);
+        // Solo graficamos gastos (negativos)
+        if (monto < 0) {
+            const cat = mov.categoria || 'Sin Categoría';
+            acumulado[cat] = (acumulado[cat] || 0) + Math.abs(monto);
+        }
+    });
+
+    const labels = Object.keys(acumulado);
+    const values = Object.values(acumulado);
+
+    console.log("Labels:", labels, "Values:", values);
+
+    const trace = {
+        values: values,
+        labels: labels,
+        type: 'pie',
+        hole: 0.4,
+        marker: {
+            colors: ['#4caf50', '#2196f3', '#ff9800', '#f44336', '#9c27b0']
+        }
+    };
+
+    const layout = {
+        title: 'Distribución de Gastos Totales',
+        paper_bgcolor: '#2d2d2d',
+        plot_bgcolor: '#2d2d2d',
+        font: { color: '#e0e0e0' },
+        showlegend: true
+    };
+
+    // Usamos el ID exacto del div
+    Plotly.newPlot('grafico-gastos', [trace], layout).catch(err => {
+        console.error("Error al renderizar Plotly:", err);
+    });
+});
+
+
+// UTILS
+async function validarCategorias(path) {
+    console.log("Validando categorías para:", path);
+
+    // Le pedimos a Python que analice el archivo
+    window.electronAPI.uploadFile(path);
+
+    // Mostramos el modal (puedes poner un spinner de carga aquí)
+    modal.style.display = 'block';
+    listaPendientes.innerHTML = "Consultando base de datos...";
+}
+
 function renderizarFormularioCategorias(pendientes) {
-    listaCategorias.innerHTML = ""; // Limpiar
+    listaPendientes.innerHTML = ""; // Limpiar
     pendientes.forEach((desc, index) => {
         const div = document.createElement('div');
         div.innerHTML = `
@@ -114,6 +153,49 @@ function renderizarFormularioCategorias(pendientes) {
             </select>
             <hr>
         `;
-        listaCategorias.appendChild(div);
+        listaPendientes.appendChild(div);
     });
+}
+
+function actualizarGrafico(datos) {
+    // 1. Filtrar solo gastos (montos negativos) y agrupar por categoría
+    console.log(datos);
+    
+    const categorias = {};
+
+    datos.forEach(d => {
+        const monto = Math.abs(parseFloat(d.monto));
+        if (parseFloat(d.monto) < 0) {
+            categorias[d.categoria] = (categorias[d.categoria] || 0) + monto;
+        }
+    });
+
+    // 2. Preparar datos para Plotly
+    const labels = Object.keys(categorias);
+    const values = Object.values(categorias);
+
+    const data = [{
+        values: values,
+        labels: labels,
+        type: 'pie',
+        hole: .4,
+        marker: {
+            colors: ['#4caf50', '#2196f3', '#ff9800', '#f44336', '#9c27b0', '#00bcd4']
+        },
+        textinfo: "label+percent",
+        insidetextorientation: "radial"
+    }];
+
+    const layout = {
+        title: 'Resumen de Gastos por Categoría',
+        height: 450,
+        paper_bgcolor: 'rgba(0,0,0,0)', // Transparente para usar el fondo del CSS
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: '#e0e0e0' },
+        showlegend: true,
+        legend: { orientation: 'h', y: -0.1 },
+        margin: { t: 50, b: 50, l: 20, r: 20 }
+    };
+
+    Plotly.newPlot('grafico-gastos', data, layout);
 }

@@ -7,7 +7,7 @@ def procesar_csv_brou(file_path):
     df = pd.read_csv(file_path, sep=';', encoding='latin-1')
     
     # Mapeo de columnas (Asegúrate que coincidan con tu CSV)
-    df = df[['Fecha', 'Asunto', 'Importe']].copy()
+    df = df[['Fecha', 'Asunto', 'Monto']].copy()
     df.columns = ['fecha', 'descripcion', 'monto']
     
     # Crear hash para evitar duplicados al importar varias veces

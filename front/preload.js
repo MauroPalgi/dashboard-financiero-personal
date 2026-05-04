@@ -10,4 +10,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onPythonOutput: (callback) => ipcRenderer.on('python-output', (event, data) => callback(data)),
   // Esta es la función que te está dando el error:
   openFileDialog: () => ipcRenderer.invoke('open-file-dialog'),
+  onUpdateGraphTotal: (callback) =>
+    ipcRenderer.on('update-graph-total', (event, data) => callback(data))
 });

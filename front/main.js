@@ -11,6 +11,31 @@ function createWindow() {
   });
   win.loadFile('index.html');
   win.webContents.openDevTools();
+  win.webContents.on('did-finish-load', () => {
+    console.log("Ventana cargada. Pidiendo datos iniciales...");
+    
+    // Un pequeño delay de 500ms ayuda a que el bridge de Preload esté 100% listo
+    setTimeout(() => {
+        const pythonGet = spawn(pythonCmd, [path.join(__dirname, '../backend/get_total_data.py')]);
+
+        pythonGet.stdout.on('data', (data) => {
+            try {
+                const response = JSON.parse(data.toString());
+                if (response.status === "ok") {
+                    // Enviamos los datos al canal que ya configuramos
+                    win.webContents.send('update-graph-total', response.datos);
+                    console.log(`Enviados ${response.datos.length} registros iniciales.`);
+                }
+            } catch (e) {
+                console.error("Error al parsear datos iniciales:", e);
+            }
+        });
+
+        pythonGet.stderr.on('data', (data) => {
+            console.error("Error en Python (Init):", data.toString());
+        });
+    }, 500); 
+});
 }
 
 ipcMain.on('upload-file', (event, filePath) => {
@@ -50,16 +75,6 @@ ipcMain.on('upload-file', (event, filePath) => {
   });
 });
 
-ipcMain.on('save-to-db', (event, datos) => {
-  // Ejecutamos un script de Python (o el mismo engine.py con otra bandera)
-  // que tome este JSON y haga: INSERT INTO movimientos VALUES (...)
-  const python = spawn(pythonCmd, [path.join(__dirname, '../backend/save_db.py'), JSON.stringify(datos)]);
-  
-  python.on('close', () => {
-    console.log("Base de datos actualizada.");
-  });
-});
-
 ipcMain.handle('open-file-dialog', async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog({
     properties: ['openFile'],
@@ -71,5 +86,22 @@ ipcMain.handle('open-file-dialog', async () => {
   if (canceled) return null;
   return filePaths[0]; // Retorna la ruta del archivo seleccionado
 });
+
+ipcMain.on('save-to-db', (event, datos) => {
+  const pythonSave = spawn(pythonCmd, [path.join(__dirname, '../backend/save_db.py'), JSON.stringify(datos)]);
+
+  pythonSave.on('close', () => {
+      // Una vez guardado, pedimos el TOTAL de la base de datos
+      const pythonGet = spawn(pythonCmd, [path.join(__dirname, '../backend/get_total_data.py')]);
+      
+      pythonGet.stdout.on('data', (data) => {
+          const response = JSON.parse(data.toString());
+          // Enviamos el TOTAL al renderer para que refresque el gráfico
+          event.reply('update-graph-total', response.datos);
+      });
+  });
+});
+
+
 
 app.whenReady().then(createWindow);

@@ -30,8 +30,8 @@ def procesar_excel_brou(file_path):
         debitos = pd.to_numeric(df[col_debito], errors='coerce').fillna(0) if col_debito else 0
         creditos = pd.to_numeric(df[col_credito], errors='coerce').fillna(0) if col_credito else 0
         
-        # Unificamos en una columna 'importe' (positivo para ingresos, negativo para gastos)
-        df['importe'] = creditos - debitos
+        # Unificamos en una columna 'monto' (positivo para ingresos, negativo para gastos)
+        df['monto'] = creditos - debitos
         
         # Limpieza de descripción
         desc = df.get('Descripción', pd.Series(['']*len(df))).fillna('').astype(str)
@@ -46,7 +46,7 @@ def procesar_excel_brou(file_path):
             registros.append({
                 "fecha": str(row['Fecha']),
                 "descripcion": row['descripcion_final'],
-                "importe": float(row['importe'])
+                "monto": float(row['monto'])
             })
         
         return {"status": "ok", "pendientes": registros}
