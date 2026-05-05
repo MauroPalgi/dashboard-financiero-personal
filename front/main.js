@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Notification, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, Notification, dialog, Menu } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
 const isWin = process.platform === "win32";
@@ -7,12 +7,13 @@ const pythonCmd = isWin ? 'python' : 'python3';
 function createWindow() {
   const win = new BrowserWindow({
     width: 1000, height: 800,
+    autoHideMenuBar: true, // Oculta la barra en Windows/Linux por defecto
     webPreferences: { preload: path.join(__dirname, 'preload.js') }
   });
   win.loadFile('index.html');
   win.webContents.openDevTools();
   win.webContents.on('did-finish-load', () => {
-    console.log("Ventana cargada. Pidiendo datos iniciales...");
+    
     
     // Un pequeño delay de 500ms ayuda a que el bridge de Preload esté 100% listo
     setTimeout(() => {
@@ -24,7 +25,7 @@ function createWindow() {
                 if (response.status === "ok") {
                     // Enviamos los datos al canal que ya configuramos
                     win.webContents.send('update-graph-total', response.datos);
-                    console.log(`Enviados ${response.datos.length} registros iniciales.`);
+                    
                 }
             } catch (e) {
                 console.error("Error al parsear datos iniciales:", e);
@@ -40,18 +41,13 @@ function createWindow() {
 
 ipcMain.on('upload-file', (event, filePath) => {
   const scriptPath = path.join(__dirname, '../backend/engine.py');
-  
-  console.log("--- DEBUG INFO ---");
-  console.log("Comando Python:", pythonCmd);
-  console.log("Ruta Script:", scriptPath);
-  console.log("Archivo a procesar:", filePath);
-
+ 
   const python = spawn(pythonCmd, [scriptPath, filePath]);
 
   // 1. Capturar la salida normal
   python.stdout.on('data', (data) => {
     const rawData = data.toString();
-    console.log("Python stdout:", rawData);
+    
     try {
       event.reply('python-output', JSON.parse(rawData));
     } catch (e) {
@@ -71,7 +67,7 @@ ipcMain.on('upload-file', (event, filePath) => {
 
   // 4. Ver cómo termina el proceso
   python.on('close', (code) => {
-    console.log(`Proceso de Python finalizado con código: ${code}`);
+    
   });
 });
 
@@ -103,5 +99,5 @@ ipcMain.on('save-to-db', (event, datos) => {
 });
 
 
-
+Menu.setApplicationMenu(null);
 app.whenReady().then(createWindow);

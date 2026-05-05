@@ -9,6 +9,7 @@ btnConfirmar.addEventListener('click', () => {
     const datosParaGuardar = [];
 
     selects.forEach(s => {
+        
         datosParaGuardar.push({
             fecha: s.dataset.fecha,
             descripcion: s.dataset.desc,
@@ -20,7 +21,7 @@ btnConfirmar.addEventListener('click', () => {
     // Enviamos la lista final a la base de datos
     window.electronAPI.saveToDatabase(datosParaGuardar);
     // ACTUALIZAR GRÁFICO AL INSTANTE
-    actualizarGrafico(datosFinales);
+    actualizarGrafico(datosParaGuardar);
 
     modal.style.display = 'none';
 });
@@ -29,7 +30,7 @@ btnCargar.addEventListener('click', async () => {
     try {
         const filePath = await window.electronAPI.openFileDialog();
         if (filePath) {
-            console.log("Archivo seleccionado:", filePath);
+            
             // Llamamos a la función que antes faltaba
             validarCategorias(filePath);
         }
@@ -40,9 +41,9 @@ btnCargar.addEventListener('click', async () => {
 
 // Escuchamos la respuesta de Python (configurado en preload.js)
 window.electronAPI.onPythonOutput(((data) => {
-    console.log(data.status);
+    
 
-    console.log("Datos recibidos en el Renderer:", data); // <-- DEBUG
+    
 
     if (data.status === "ok" && data.pendientes) {
         listaPendientes.innerHTML = ""; // Limpiar
@@ -61,7 +62,7 @@ window.electronAPI.onPythonOutput(((data) => {
                 <span>${gasto.fecha}</span>
                 <strong>${gasto.descripcion}</strong>
                 <span class="monto ${claseMonto}">$${gasto.monto.toFixed(2)}</span>
-                <select class="input-categoria">
+                <select data-fecha="${gasto.fecha}" data-desc="${gasto.descripcion}" data-monto="${gasto.monto}" class="input-categoria">
                     <option value="Comida">Comida</option>
                     <option value="Supermercado">Supermercado</option>
                     <option value="Servicios">Servicios</option>
@@ -80,7 +81,7 @@ window.electronAPI.onPythonOutput(((data) => {
 }));
 
 window.electronAPI.onUpdateGraphTotal((datos) => {
-    console.log("Datos recibidos para graficar:", datos);
+    
 
     if (!datos || datos.length === 0) {
         console.warn("La base de datos está vacía, no hay nada que graficar.");
@@ -100,7 +101,7 @@ window.electronAPI.onUpdateGraphTotal((datos) => {
     const labels = Object.keys(acumulado);
     const values = Object.values(acumulado);
 
-    console.log("Labels:", labels, "Values:", values);
+    
 
     const trace = {
         values: values,
@@ -129,7 +130,7 @@ window.electronAPI.onUpdateGraphTotal((datos) => {
 
 // UTILS
 async function validarCategorias(path) {
-    console.log("Validando categorías para:", path);
+    
 
     // Le pedimos a Python que analice el archivo
     window.electronAPI.uploadFile(path);
@@ -159,7 +160,7 @@ function renderizarFormularioCategorias(pendientes) {
 
 function actualizarGrafico(datos) {
     // 1. Filtrar solo gastos (montos negativos) y agrupar por categoría
-    console.log(datos);
+    
     
     const categorias = {};
 

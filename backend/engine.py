@@ -20,7 +20,7 @@ def procesar_excel_brou(file_path):
         if row_index is None:
             return {"status": "error", "message": "No se encontró la cabecera de la tabla."}
 
-        df = pd.read_excel(file_path, skiprows=row_index)
+        df = pd.read_excel(file_path, skiprows=row_index, engine='xlrd')
         df.columns = [str(c).strip().replace('\n', ' ') for c in df.columns]
 
         # Lógica de montos (Débito vs Crédito)
